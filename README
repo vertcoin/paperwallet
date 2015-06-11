@@ -2,8 +2,8 @@ JavaScript Client-Side Vertcoin Wallet Generator
 
 GPG key for validation: http://pgp.mit.edu/pks/lookup?op=vindex&search=0xFD948CCC1EAB2FB5
 
-A fork of the liteaddress.org project located at:
-https://github.com/litecoin-project/liteaddress.org
+A fork of the bitaddress.org project located at:
+https://github.com/pointbiz/bitaddress.org
 
 Provides an all-in-one HTML document with embedded JavaScript/Css/Images. The JavaScript is readable not minified and contains no XMLHttpRequest's (no AJAX). The benefit of this technique is you can load the JavaScript locally and trust that the JavaScript did not change after being loaded. 
 
