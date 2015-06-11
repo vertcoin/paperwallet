@@ -414,11 +414,9 @@
 				return true;
 			},
 			testGetECKeyFromBase6Key: function () {
-				var base = 6;
 				var baseKey = "100531114202410255230521444145414341221420541210522412225005202300434134213212540304311321323051431";
 				var hexKey = "292665C3872418ADF1DA7FFA3A646F2F0602246DA6098A91D229C32150F2718B";
-				var bigInt = new BigInteger(baseKey, base);
-				var ecKey = new Bitcoin.ECKey(bigInt);
+				var ecKey = new Bitcoin.ECKey(baseKey);
 				if (ecKey.getBitcoinHexFormat() != hexKey) {
 					return false;
 				}
@@ -460,6 +458,113 @@
 					return false;
 				}
 				return true;
+			},
+
+			// test split wallet
+			testSplitAndCombinePrivateKey2of2: function () {
+				// lowercase hex key
+				var key = "0004d30da67214fa65a41a6493576944c7ea86713b14db437446c7a8df8e13da"; //5HpJ4bpHFEMWYwCidjtZHwM2rsMh4PRfmZKV8Y21i7msiUkQKUW
+				var numshares = 2;
+				var threshold = 2;
+				secrets.setRNG();
+				secrets.init(7);
+
+				var shares = ninja.wallets.splitwallet.getFormattedShares(key, numshares, threshold);
+				var combined = ninja.wallets.splitwallet.combineFormattedShares(shares);
+				var btcKey = new Bitcoin.ECKey(combined);
+
+				if (btcKey.getBitcoinHexFormat() != key.toUpperCase()) {
+					return false;
+				}
+				return true;
+			},
+			// Example use case #1:
+			// Division of 3 shares:
+			//   1 share in a safety deposit box ("Box")
+			//   1 share at Home
+			//   1 share at Work
+			// Threshold of 2 can be redeemed in these permutations 
+			//   Home + Box 
+			//   Work + Box 
+			//   Home + Work 
+			testSplitAndCombinePrivateKey2of3: function () {
+				// lowercase hex key
+				var key = "0004d30da67214fa65a41a6493576944c7ea86713b14db437446c7a8df8e13da"; //5HpJ4bpHFEMWYwCidjtZHwM2rsMh4PRfmZKV8Y21i7msiUkQKUW
+				var numshares = 3;
+				var threshold = 2;
+				secrets.setRNG();
+				secrets.init(7);
+
+				var shares = ninja.wallets.splitwallet.getFormattedShares(key, numshares, threshold);
+				shares.shift();
+				var combined = ninja.wallets.splitwallet.combineFormattedShares(shares);
+				var btcKey = new Bitcoin.ECKey(combined);
+
+				if (btcKey.getBitcoinHexFormat() != key.toUpperCase()) {
+					return false;
+				}
+				return true;
+			},
+			testSplitAndCombinePrivateKey2of4: function () {
+				// uppercase hex key
+				var key = "292665C3872418ADF1DA7FFA3A646F2F0602246DA6098A91D229C32150F2718B"; //5J8QhiQtAiozKwyk3GCycAscg1tNaYhNdiiLey8vaDK8Bzm4znb
+				var numshares = 4;
+				var threshold = 2;
+				secrets.setRNG();
+				secrets.init(7);
+
+				var shares = ninja.wallets.splitwallet.getFormattedShares(key, numshares, threshold);
+				shares.shift();
+				shares.shift();
+				var combined = ninja.wallets.splitwallet.combineFormattedShares(shares);
+				var btcKey = new Bitcoin.ECKey(combined);
+
+				if (btcKey.getBitcoinHexFormat() != key) {
+					return false;
+				}
+				return true;
+			},
+			// Example use case #2:
+			// Division of 13 shares:
+			//   4 shares in a safety deposit box ("Box")
+			//   3 shares with good friend Angie
+			//   3 shares with good friend Fred
+			//   3 shares with Self at home or office
+			// Threshold of 7 can be redeemed in these permutations 
+			//   Self + Box (no trust to spend your coins but your friends are backing up your shares)
+			//   Angie + Box (Angie will send btc to executor of your will)
+			//   Fred + Box (if Angie hasn't already then Fred will send btc to executor of your will)
+			//   Angie + Fred + Self (bank fire/theft then you with both your friends can spend the coins)
+			testSplitAndCombinePrivateKey7of13: function () {
+				var key = "0004d30da67214fa65a41a6493576944c7ea86713b14db437446c7a8df8e13da";
+				var numshares = 12;
+				var threshold = 7;
+				secrets.setRNG();
+				secrets.init(7);
+
+				var shares = ninja.wallets.splitwallet.getFormattedShares(key, numshares, threshold);
+				var combined = ninja.wallets.splitwallet.combineFormattedShares(shares);
+				var btcKey = new Bitcoin.ECKey(combined);
+
+				if (btcKey.getBitcoinHexFormat() != key.toUpperCase()) {
+					return false;
+				}
+				return true;
+			},
+			testCombinePrivateKeyFromXofYShares: function () {
+				var key = "5K9nHKqbwc1xXpa6wV5p3AaCnubvxQDBukKaFkq7ThAkxgMTMEh";
+				// these are 4 of 6 shares
+				var shares = ["3XxjMASmrkk6eXMM9kAJA7qiqViNVBfiwA1GQDLvg4PVScL", "3Y2DkcPuNX8VKZwpnDdxw55wJtcnCvv2nALqe8nBLViHvck", 
+					"3Y6qv7kyGwgRBKVHVbUNtzmLYAZWQtTPztPwR8wc7uf4MXR", "3YD4TowZn6jw5ss8U89vrcPHonFW4vSs9VKq8MupV5kevG4"]
+				secrets.setRNG();
+				secrets.init(7);
+
+				var combined = ninja.wallets.splitwallet.combineFormattedShares(shares);
+				var btcKey = new Bitcoin.ECKey(combined);
+				if (btcKey.getBitcoinWalletImportFormat() != key) {
+					return false;
+				}
+				return true;
 			}
 		},
 
@@ -467,19 +572,19 @@
 			//https://en.bitcoin.it/wiki/BIP_0038
 			testBip38: function (done) {
 				var tests = [
-					//No compression, no EC multiply
+				//No compression, no EC multiply
 					["6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg", "TestingOneTwoThree", "5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR"],
 					["6PRNFFkZc2NZ6dJqFfhRoFNMR9Lnyj7dYGrzdgXXVMXcxoKTePPX1dWByq", "Satoshi", "5HtasZ6ofTHP6HCwTqTkLDuLQisYPah7aUnSKfC7h4hMUVw2gi5"],
-					//Compression, no EC multiply
+				//Compression, no EC multiply
 					["6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUeo", "TestingOneTwoThree", "L44B5gGEpqEDRS9vVPz7QT35jcBG2r3CZwSwQ4fCewXAhAhqGVpP"],
 					["6PYLtMnXvfG3oJde97zRyLYFZCYizPU5T3LwgdYJz1fRhh16bU7u6PPmY7", "Satoshi", "KwYgW8gcxj1JWJXhPSu4Fqwzfhp5Yfi42mdYmMa4XqK7NJxXUSK7"],
-					//EC multiply, no compression, no lot/sequence numbers
+				//EC multiply, no compression, no lot/sequence numbers
 					["6PfQu77ygVyJLZjfvMLyhLMQbYnu5uguoJJ4kMCLqWwPEdfpwANVS76gTX", "TestingOneTwoThree", "5K4caxezwjGCGfnoPTZ8tMcJBLB7Jvyjv4xxeacadhq8nLisLR2"],
 					["6PfLGnQs6VZnrNpmVKfjotbnQuaJK4KZoPFrAjx1JMJUa1Ft8gnf5WxfKd", "Satoshi", "5KJ51SgxWaAYR13zd9ReMhJpwrcX47xTJh2D3fGPG9CM8vkv5sH"],
-					//EC multiply, no compression, lot/sequence numbers
+				//EC multiply, no compression, lot/sequence numbers
 					["6PgNBNNzDkKdhkT6uJntUXwwzQV8Rr2tZcbkDcuC9DZRsS6AtHts4Ypo1j", "MOLON LABE", "5JLdxTtcTHcfYcmJsNVy1v2PMDx432JPoYcBTVVRHpPaxUrdtf8"],
 					["6PgGWtx25kUg8QWvwuJAgorN6k9FbE25rv5dMRwu5SKMnfpfVe5mar2ngH", Crypto.charenc.UTF8.bytesToString([206, 156, 206, 159, 206, 155, 206, 169, 206, 157, 32, 206, 155, 206, 145, 206, 146, 206, 149])/*UTF-8 characters, encoded in source so they don't get corrupted*/, "5KMKKuUmAkiNbA3DazMQiLfDq47qs8MAEThm4yL8R2PhV1ov33D"]];
-				
+
 				// running each test uses a lot of memory, which isn't freed
 				// immediately, so give the VM a little time to reclaim memory
 				function waitThenCall(callback) {
